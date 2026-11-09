@@ -8,7 +8,8 @@ class Categorizacion(BaseModel):
 
     es_acoso: Literal["si", "no", "dudoso"]
     tipo_acoso: Literal["fisico", "verbal", "social", "ciberacoso", "otro"]
-    relacion_informante: Literal["afectado_directo", "testigo", "no_especificado"]
+    # Solo cambia si el Informante lo expresa: nunca se asume que sea la víctima.
+    relacion_informante: Literal["afectado_directo", "testigo", "no_especificado"] = "no_especificado"
     reiteracion: Literal["si", "no", "desconocido"]
     nivel_urgencia: Literal["normal", "preocupante", "riesgo_inminente"]
     resumen: str = Field(description="1-2 frases neutras con los nombres tal como los escribió el alumno")

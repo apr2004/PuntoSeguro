@@ -158,3 +158,14 @@ def test_el_llm_recibe_la_conversacion_completa_y_el_esquema_de_la_categorizacio
         "es_acoso", "tipo_acoso", "relacion_informante", "reiteracion",
         "nivel_urgencia", "resumen", "indicios",
     }
+
+
+def test_red_de_seguridad_compara_palabras_enteras_salvo_raices():
+    llm = LLMFalso(respuesta_llm(nivel_urgencia="normal", indicios=[]))
+
+    resultado = categorizar(
+        conversacion("Me encerraron en un armario del gimnasio y luego me pidieron perdón."),
+        llm=llm,
+    )
+
+    assert resultado.nivel_urgencia == "normal"

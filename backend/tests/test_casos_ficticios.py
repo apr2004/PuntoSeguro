@@ -84,7 +84,8 @@ def test_lo_que_no_es_acoso_no_se_trata_como_acoso(llm):
 
 def test_riesgo_inminente(llm):
     c = categorizar(
-        alumno("Ya no aguanto más lo que me hacen en el instituto. A veces pienso que lo mejor sería quitarme la vida."),
+        # Paráfrasis fuera de palabras_riesgo.txt: comprueba el criterio del modelo, no la red.
+        alumno("Ya no aguanto más lo que me hacen en el instituto. Esta tarde pienso tirarme desde la azotea."),
         llm=llm,
     )
     assert c.nivel_urgencia == "riesgo_inminente"
@@ -96,7 +97,7 @@ def test_informante_que_no_aclara_a_quien_le_pasa(llm):
         alumno("¿Qué se puede hacer si en clase hay alguien a quien insultan siempre?"),
         llm=llm,
     )
-    assert c.relacion_informante != "afectado_directo"
+    assert c.relacion_informante == "no_especificado"
 
 
 def test_ambiguo(llm):

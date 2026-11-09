@@ -1,8 +1,10 @@
 # Red de seguridad de Riesgo inminente.
-# Una expresión por línea. Se compara sin mayúsculas ni tildes y como fragmento de texto
-# ("suicid" detecta "suicidio", "suicidarme"...). Las líneas que empiezan por # se ignoran.
+# Una expresión por línea. Se compara sin mayúsculas ni tildes y por palabras enteras
+# ("un arma" no detecta "un armario"). Un * al final indica raíz: "suicid*" detecta
+# "suicidio", "suicidarme"... Las líneas que empiezan por # se ignoran.
 # Si alguna aparece en un mensaje del alumno, el Nivel de urgencia sube a riesgo_inminente.
-suicid
+# Evita frases hechas que se usan en broma ("mi madre me va a matar"): generan falsas alarmas.
+suicid*
 me quiero morir
 quiero morirme
 quitarme la vida
@@ -11,7 +13,7 @@ me voy a matar
 no quiero vivir
 no quiero seguir viviendo
 mejor si no existiera
-autolesion
+autolesion*
 hacerme dano
 me hago cortes
 cortarme las venas
@@ -19,9 +21,6 @@ cuchillo
 navaja
 pistola
 un arma
-me va a matar
-nos va a matar
-le va a matar
-te voy a matar
 amenaza de muerte
+amenazas de muerte
 me ha pegado una paliza

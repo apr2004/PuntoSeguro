@@ -5,6 +5,6 @@ El prototipo debe ser 100 % gratuito, así que la Categorización de Reportes us
 ## Consequences
 
 - Ollama, la descarga del modelo y el backend se levantan con Docker Compose, así que Docker es el único requisito para trabajar en el chatbot; nadie instala Ollama ni descarga modelos a mano.
-- La detección de Riesgo inminente no depende solo del modelo: una comprobación determinista por palabras clave puede elevar la urgencia, pero nunca bajarla.
+- La detección de Riesgo inminente no depende solo del modelo: una comprobación determinista por palabras clave puede elevar la urgencia, pero nunca bajarla. Si el LLM falla y la red detecta riesgo, se devuelve una Categorización mínima de Riesgo inminente para no perder la alerta; sin riesgo, se lanza un error en lugar de inventarla.
 - Se elige `qwen3:1.7b` en lugar de `qwen3:4b` para que funcione en portátiles con poca RAM y la descarga sea menor. Quien tenga más memoria puede usar `qwen3:4b`, que categoriza mejor.
 - Los prompts se ajustan a un modelo pequeño; cambiar a otro modelo o proveedor exige revisar los prompts y repetir los casos ficticios de prueba.

@@ -31,7 +31,7 @@ services:
     build: ./backend
     depends_on:
       ollama-init:
-        condition: service_completed_successfully
+        condition: service_started # los tests rápidos no necesitan esperar a la descarga del modelo
     environment:
       <<: *modelo
       OLLAMA_HOST: http://ollama:11434
