@@ -23,6 +23,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/puntoseguro
       SPRING_DATASOURCE_USERNAME: puntoseguro
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-change-me}
+      SPRING_PROFILES_ACTIVE: dev
+      PUNTOSEGURO_JWT_SECRET: ${PUNTOSEGURO_JWT_SECRET:-ZGV2ZWxvcG1lbnQtb25seS1jaGFuZ2UtdGhpcy1zZWNyZXQta2V5LTAx}
     ports:
       - "8080:8080"
   frontend:
