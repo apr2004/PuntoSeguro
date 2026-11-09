@@ -1,0 +1,7 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "ollama: casos ficticios contra Ollama real (S2); se saltan si Ollama no responde",
+]
+addopts = "-m 'not ollama'"
