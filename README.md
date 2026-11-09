@@ -20,3 +20,9 @@ El backend sigue la arquitectura Spring Boot de UrbanPulse y el frontend es Reac
 El Compose local activa el perfil `dev`, que crea, si no existen, las cuentas `estudiante@puntoseguro.local`, `profesor@puntoseguro.local` y `centro@puntoseguro.local`. La contraseña inicial de las tres es `puntoseguro`. El registro público crea únicamente estudiantes; los otros roles no se pueden seleccionar en el formulario. Estos usuarios y la clave JWT predeterminada de Compose son exclusivos de desarrollo y no deben usarse en producción.
 
 La API expone `POST /api/auth/register`, `POST /api/auth/login` y `GET /api/auth/me` (este último requiere `Authorization: Bearer <token>`). El frontend guarda el token en `sessionStorage` hasta cerrar sesión o la pestaña. La documentación OpenAPI está disponible en http://localhost:8080/swagger-ui.html. Para ejecutar el backend fuera de Compose, configura `PUNTOSEGURO_JWT_SECRET` con una clave aleatoria codificada en Base64 de al menos 32 bytes; el backend no arranca sin ella. La migración V2 añade la tabla `usuario`.
+
+## Datos del alumnado
+
+Tras iniciar sesión, la pestaña **Estudiantes** permite crear y editar estudiantes y gestionar sus calificaciones y asistencias. Un estudiante con registros asociados no se puede eliminar hasta retirar esos registros. Los formularios permiten añadir opciones a los catálogos de asignaturas, plataformas y tipos de asistencia. Los cambios se guardan en PostgreSQL; las operaciones fallidas muestran un mensaje y las transacciones conservan los datos previamente guardados.
+
+En el perfil `dev`, si no hay estudiantes, se cargan una sola vez estudiantes y registros ficticios para probar la interfaz. El CRUD requiere una sesión válida, pero por ahora no restringe operaciones según el rol ni los estudiantes asignados. No se ha implementado una sincronización externa con PASEN u otra plataforma.
