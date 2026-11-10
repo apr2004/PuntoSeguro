@@ -1,37 +1,28 @@
 # PuntoSeguro
 Asistente conversacional inteligente integrado en PASEN para la prevención, detección y gestión de casos de acoso escolar y abandono académico.
 
-## Arranque en 3 comandos
+## Arranque local
 
-Solo necesitas [Docker](https://docs.docker.com/get-docker/). Ollama, Python y el modelo se instalan solos.
+Requisitos: Docker y Docker Compose. Desde la raíz:
 
-```bash
-docker compose up -d                                   # 1. Levanta Ollama, descarga el modelo y el backend (la primera vez tarda)
-docker compose run --rm backend pytest                 # 2. Tests rápidos (LLM falso)
-docker compose run --rm backend python -m puntoseguro.categorizar_texto "A mi amiga le insultan en clase"   # 3. Prueba una Categorización
+```sh
+docker compose up --build
 ```
 
-Casos ficticios contra el modelo real (se saltan si Ollama no responde):
+La web estará en http://localhost:3000, la API en http://localhost:8080 y PostgreSQL en el puerto 5432. La base se conserva en el volumen `puntoseguro-db`. La contraseña de desarrollo puede cambiarse mediante `POSTGRES_PASSWORD` en un archivo `.env` (ver `.env.example`).
 
-```bash
-docker compose run --rm backend pytest -m ollama
-```
+Flyway crea el esquema al arrancar el backend a partir de `backend/src/main/resources/db/migration/V1__create_initial_schema.sql`, basado en `database/schema.sql`. Los datos ficticios de `database/datos_prueba.sql` son opcionales y no se cargan automáticamente. El esquema original contiene sentencias DROP: no lo ejecutes sobre una base con datos que quieras conservar. Para cambios futuros, añade migraciones Flyway nuevas.
 
-### Configuración
+El backend sigue la arquitectura Spring Boot de UrbanPulse y el frontend es React web con Vite. Las carpetas `.agents` se han copiado de UrbanPulse; algunas skills conservan referencias a su stack original y deben interpretarse para este proyecto. Esta estructura no implementa todavía la issue 2.
 
-| Variable | Por defecto | Para qué |
-|---|---|---|
-| `PUNTOSEGURO_MODELO` | `qwen3:1.7b` | Modelo de Ollama. Con más RAM, `qwen3:4b` categoriza mejor. |
-| `PUNTOSEGURO_TIMEOUT` | `60` | Segundos máximos por llamada al LLM. |
-| `OLLAMA_HOST` | `http://localhost:11435` | URL de Ollama. Dentro de Docker ya apunta al servicio `ollama`. |
+## Autenticación en desarrollo
 
-Ejemplo: `PUNTOSEGURO_MODELO=qwen3:4b docker compose up -d`.
+El Compose local activa el perfil `dev`, que crea, si no existen, las cuentas `estudiante@puntoseguro.local`, `profesor@puntoseguro.local` y `centro@puntoseguro.local`. La contraseña inicial de las tres es `puntoseguro`. El registro público crea únicamente estudiantes; los otros roles no se pueden seleccionar en el formulario. Estos usuarios y la clave JWT predeterminada de Compose son exclusivos de desarrollo y no deben usarse en producción.
 
-El Ollama del proyecto se expone en el puerto **11435** para no chocar con un Ollama instalado en tu máquina (11434).
+La API expone `POST /api/auth/register`, `POST /api/auth/login` y `GET /api/auth/me` (este último requiere `Authorization: Bearer <token>`). El frontend guarda el token en `sessionStorage` hasta cerrar sesión o la pestaña. La documentación OpenAPI está disponible en http://localhost:8080/swagger-ui.html. Para ejecutar el backend fuera de Compose, configura `PUNTOSEGURO_JWT_SECRET` con una clave aleatoria codificada en Base64 de al menos 32 bytes; el backend no arranca sin ella. La migración V2 añade la tabla `usuario`.
 
-## Estructura
+## Datos del alumnado
 
-- `backend/puntoseguro/categorizacion/`: Categorización de Reportes. Interfaz pública: `categorizar(conversacion, llm=None)`.
-  - `palabras_riesgo.txt`: lista editable de la red de seguridad de Riesgo inminente.
-- `backend/puntoseguro/prompts/`: prompts en español (`categorizacion.md` y `chatbot.md`, el system prompt base del chatbot).
-- `GLOSSARY.md`: vocabulario del dominio. `docs/adr/`: decisiones de arquitectura.
+Tras iniciar sesión, la pestaña **Estudiantes** permite crear y editar estudiantes y gestionar sus calificaciones y asistencias. Un estudiante con registros asociados no se puede eliminar hasta retirar esos registros. Los formularios permiten añadir opciones a los catálogos de asignaturas, plataformas y tipos de asistencia. Los cambios se guardan en PostgreSQL; las operaciones fallidas muestran un mensaje y las transacciones conservan los datos previamente guardados.
+
+En el perfil `dev`, si no hay estudiantes, se cargan una sola vez estudiantes y registros ficticios para probar la interfaz. El CRUD requiere una sesión válida, pero por ahora no restringe operaciones según el rol ni los estudiantes asignados. No se ha implementado una sincronización externa con PASEN u otra plataforma.

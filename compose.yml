@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: puntoseguro
+      POSTGRES_USER: puntoseguro
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - puntoseguro-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U puntoseguro -d puntoseguro"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  api:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/puntoseguro
+      SPRING_DATASOURCE_USERNAME: puntoseguro
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-change-me}
+      SPRING_PROFILES_ACTIVE: dev
+      PUNTOSEGURO_JWT_SECRET: ${PUNTOSEGURO_JWT_SECRET:-ZGV2ZWxvcG1lbnQtb25seS1jaGFuZ2UtdGhpcy1zZWNyZXQta2V5LTAx}
+    ports:
+      - "8080:8080"
+  frontend:
+    build: ./frontend
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+volumes:
+  puntoseguro-db:
