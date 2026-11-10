@@ -37,6 +37,16 @@ _Avoid_: Emergencia (como término técnico)
 Resultado de interpretar un Reporte: si trata de acoso, Tipo de acoso, Relación del informante, Reiteración y Nivel de urgencia. Es orientativa y nunca constituye un diagnóstico.
 _Avoid_: Diagnóstico, clasificación del alumno
 
+## Seguimiento del alumnado
+
+**Docente asignado**:
+Docente al que el centro ha asignado expresamente el seguimiento de un alumno. La asignación la decide el centro; no se deduce de la tutoría del grupo ni de las asignaturas que imparte.
+_Avoid_: Tutor (se confunde con el tutor de grupo y con el tutor legal), profesor del alumno
+
+**Observación**:
+Anotación que un docente registra sobre la evolución de un alumno, con su autor y la fecha en que se registra. Es información de seguimiento: nunca constituye por sí misma un Caso confirmado.
+_Avoid_: Incidencia, parte, denuncia; también "observaciones" para referirse a los comentarios de un registro de asistencia o calificación (eso es un comentario)
+
 ## Centro
 
 **Caso confirmado**:
