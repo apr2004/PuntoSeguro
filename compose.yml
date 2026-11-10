@@ -25,6 +25,10 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-dev-only-change-me}
       SPRING_PROFILES_ACTIVE: dev
       PUNTOSEGURO_JWT_SECRET: ${PUNTOSEGURO_JWT_SECRET:-ZGV2ZWxvcG1lbnQtb25seS1jaGFuZ2UtdGhpcy1zZWNyZXQta2V5LTAx}
+      PUNTOSEGURO_LLM_URL: ${PUNTOSEGURO_LLM_URL:-https://api.groq.com/openai/v1}
+      PUNTOSEGURO_LLM_MODELO: ${PUNTOSEGURO_LLM_MODELO:-openai/gpt-oss-20b}
+      PUNTOSEGURO_LLM_API_KEY: ${PUNTOSEGURO_LLM_API_KEY:-}
+      PUNTOSEGURO_LLM_TIMEOUT: ${PUNTOSEGURO_LLM_TIMEOUT:-60}
     ports:
       - "8080:8080"
   frontend:
@@ -33,5 +37,32 @@ services:
       - api
     ports:
       - "3000:80"
+  # LLM local opcional (ver README): docker compose --profile ollama up --build
+  ollama:
+    image: ollama/ollama:0.40.9
+    profiles: ["ollama"]
+    environment:
+      OLLAMA_CONTEXT_LENGTH: 8192 # el valor por defecto cortaría conversaciones largas sin avisar
+    ports:
+      - "11435:11434" # 11435 en la máquina para no chocar con un Ollama nativo en el 11434
+    volumes:
+      - ollama-modelos:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+  ollama-init:
+    image: ollama/ollama:0.40.9
+    profiles: ["ollama"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      MODELO: ${PUNTOSEGURO_LLM_MODELO:-qwen3:1.7b}
+    entrypoint: ["sh", "-c", "ollama pull \"$$MODELO\""]
+    restart: "no"
 volumes:
   puntoseguro-db:
+  ollama-modelos:

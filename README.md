@@ -26,3 +26,13 @@ La API expone `POST /api/auth/register`, `POST /api/auth/login` y `GET /api/auth
 Tras iniciar sesión, la pestaña **Estudiantes** permite crear y editar estudiantes y gestionar sus calificaciones y asistencias. Un estudiante con registros asociados no se puede eliminar hasta retirar esos registros. Los formularios permiten añadir opciones a los catálogos de asignaturas, plataformas y tipos de asistencia. Los cambios se guardan en PostgreSQL; las operaciones fallidas muestran un mensaje y las transacciones conservan los datos previamente guardados.
 
 En el perfil `dev`, si no hay estudiantes, se cargan una sola vez estudiantes y registros ficticios para probar la interfaz. El CRUD requiere una sesión válida, pero por ahora no restringe operaciones según el rol ni los estudiantes asignados. No se ha implementado una sincronización externa con PASEN u otra plataforma.
+
+## Categorización de Reportes
+
+El chatbot interpreta la conversación del alumno y devuelve una Categorización orientativa (si trata de acoso, Tipo de acoso, Relación del informante, Reiteración, Nivel de urgencia, resumen e indicios). La API expone `POST /api/reports/categorization`, que requiere sesión, no guarda nada y puede probarse desde Swagger UI. Otros servicios del backend pueden inyectar `ReportCategorizationService` directamente. El vocabulario está en `GLOSSARY.md` y la elección del LLM, en `docs/adr/0001-llm-externo-gratuito.md`.
+
+Por defecto usa el plan gratuito de Groq. Crea tu propia clave en https://console.groq.com/keys (sin tarjeta) y ponla en tu `.env` como `PUNTOSEGURO_LLM_API_KEY`; usa la tuya, porque el límite diario es por cuenta. Sin clave, el backend arranca igual y la Categorización responde 503 (`CATEGORIZATION_UNAVAILABLE`). Envía solo relatos ficticios: el proveedor es externo.
+
+Para usar un LLM local en lugar de Groq, añade a tu `.env` `PUNTOSEGURO_LLM_URL=http://ollama:11434/v1`, `PUNTOSEGURO_LLM_MODELO=qwen3:1.7b` y `PUNTOSEGURO_LLM_API_KEY=ollama` (Ollama no usa la clave, pero sin ella no se envía nada), con las tres a la vez, y arranca con `docker compose --profile ollama up --build`. La primera vez descarga el modelo (unos minutos). El Ollama del proyecto se expone en el puerto 11435 para no chocar con uno instalado en tu máquina. `PUNTOSEGURO_LLM_TIMEOUT` (60 s por defecto) limita cada llamada.
+
+Los prompts en español están en `backend/src/main/resources/prompts/` (`categorizacion.md` y `chatbot.md`, el system prompt base del chatbot) y la lista editable de la red de seguridad de Riesgo inminente, en `backend/src/main/resources/categorization/palabras_riesgo.txt`. Los casos ficticios contra el LLM real se ejecutan a mano con `PUNTOSEGURO_LLM_API_KEY=... ./mvnw test -Dtest=FictitiousCasesTest` y se saltan si no hay clave.
