@@ -14,7 +14,7 @@ class InitialMigrationTest {
     @Container static final PostgreSQLContainer<?> db = new PostgreSQLContainer<>("postgres:17");
 
     @Test void createsSchemaAndEnforcesConstraints() throws Exception {
-        var flyway = Flyway.configure().dataSource(db.getJdbcUrl(), db.getUsername(), db.getPassword()).load();
+        var flyway = Flyway.configure().dataSource(db.getJdbcUrl(), db.getUsername(), db.getPassword()).target("1").load();
         flyway.migrate();
         assertEquals("1", flyway.info().current().getVersion().getVersion());
         try (var c = DriverManager.getConnection(db.getJdbcUrl(), db.getUsername(), db.getPassword()); var s = c.createStatement()) {
