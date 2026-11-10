@@ -27,6 +27,8 @@ Tras iniciar sesión, la pestaña **Estudiantes** permite crear y editar estudia
 
 En el perfil `dev`, si no hay estudiantes, se cargan una sola vez estudiantes y registros ficticios para probar la interfaz. El CRUD requiere una sesión válida, pero por ahora no restringe operaciones según el rol ni los estudiantes asignados. No se ha implementado una sincronización externa con PASEN u otra plataforma.
 
+En la ficha de cada estudiante, la sección **Observaciones** recoge las Observaciones de los docentes, de la más reciente a la más antigua, con su autor y su fecha de registro, que pone la plataforma. Los profesores pueden añadirlas y leerlas, el centro solo leerlas y los estudiantes no tienen acceso. La API expone `GET` y `POST /api/students/{sid}/observations`. Una Observación es información de seguimiento y nunca constituye un Caso confirmado. Por ahora cualquier profesor puede registrar observaciones sobre cualquier estudiante; la restricción al Docente asignado está pendiente (#10).
+
 ## Categorización de Reportes
 
 El chatbot interpreta la conversación del alumno y devuelve una Categorización orientativa (si trata de acoso, Tipo de acoso, Relación del informante, Reiteración, Nivel de urgencia, resumen e indicios). La API expone `POST /api/reports/categorization`, que requiere sesión, no guarda nada y puede probarse desde Swagger UI. Otros servicios del backend pueden inyectar `ReportCategorizationService` directamente. El vocabulario está en `GLOSSARY.md` y la elección del LLM, en `docs/adr/0001-llm-externo-gratuito.md`.
