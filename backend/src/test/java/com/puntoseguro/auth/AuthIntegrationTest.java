@@ -46,4 +46,38 @@ class AuthIntegrationTest {
         assertEquals(409,call("POST","register",body,null).statusCode());
         assertEquals(400,call("POST","register","{}",null).statusCode());
     }
+
+    HttpResponse<String> data(String method,String path,String body,String token) throws Exception {
+        var b=HttpRequest.newBuilder(URI.create("http://localhost:"+port+"/api/"+path)).header("Content-Type","application/json");
+        if(token!=null) b.header("Authorization","Bearer "+token);
+        return client.send(b.method(method,body==null?HttpRequest.BodyPublishers.noBody():HttpRequest.BodyPublishers.ofString(body)).build(),HttpResponse.BodyHandlers.ofString());
+    }
+    @Test void studentRecordsCrudAndFailedUpdatePreservesData() throws Exception {
+        assertEquals(401,data("GET","students",null,null).statusCode());
+        var login=call("POST","login","{\"email\":\"profesor@puntoseguro.local\",\"password\":\"puntoseguro\"}",null);
+        String token=json.readTree(login.body()).get("accessToken").asText();
+        var created=data("POST","students","{\"nombre\":\"Test\",\"apellidos\":\"Alumno\",\"curso\":\"1 ESO\",\"grupo\":\"A\"}",token);
+        assertEquals(201,created.statusCode(),created.body()); int sid=json.readTree(created.body()).get("id").asInt();
+        String student="students/"+sid;
+        assertEquals(200,data("GET",student,null,token).statusCode());
+        assertEquals(200,data("PUT",student,"{\"nombre\":\"Test editado\",\"apellidos\":\"Alumno\"}",token).statusCode());
+        int subject=json.readTree(data("GET","catalogs/subjects",null,token).body()).get(0).get("id").asInt();
+        int platform=json.readTree(data("GET","catalogs/platforms",null,token).body()).get(0).get("id").asInt();
+        int type=json.readTree(data("GET","catalogs/attendance-types",null,token).body()).get(0).get("id").asInt();
+        String grade="{\"asignaturaId\":"+subject+",\"plataformaId\":"+platform+",\"nota\":8,\"evaluacion\":\"Primera\",\"fecha\":\"2026-10-15\"}";
+        var madeGrade=data("POST",student+"/grades",grade,token); assertEquals(201,madeGrade.statusCode(),madeGrade.body());
+        int gid=json.readTree(madeGrade.body()).get("id").asInt(); String gradePath=student+"/grades/"+gid;
+        assertEquals(1,json.readTree(data("GET",student+"/grades",null,token).body()).size());
+        assertEquals(200,data("PUT",gradePath,grade.replace("8,", "9,"),token).statusCode());
+        assertEquals(400,data("PUT",gradePath,grade.replace("8,", "11,"),token).statusCode());
+        assertEquals(9,json.readTree(data("GET",gradePath,null,token).body()).get("nota").asInt());
+        assertEquals(404,data("GET","students/999999/grades/"+gid,null,token).statusCode());
+        String att="{\"tipoId\":"+type+",\"plataformaId\":"+platform+",\"dia\":\"2026-10-15\"}";
+        var madeAtt=data("POST",student+"/attendance",att,token); assertEquals(201,madeAtt.statusCode(),madeAtt.body()); int aid=json.readTree(madeAtt.body()).get("id").asInt(); String attPath=student+"/attendance/"+aid;
+        assertEquals(200,data("PUT",attPath,att.replace("2026-10-15","2026-10-16"),token).statusCode());
+        assertEquals("2026-10-16",json.readTree(data("GET",attPath,null,token).body()).get("dia").asText());
+        assertEquals(409,data("DELETE",student,null,token).statusCode());
+        assertEquals(204,data("DELETE",gradePath,null,token).statusCode()); assertEquals(204,data("DELETE",attPath,null,token).statusCode());
+        assertEquals(204,data("DELETE",student,null,token).statusCode()); assertEquals(404,data("GET",student,null,token).statusCode());
+    }
 }

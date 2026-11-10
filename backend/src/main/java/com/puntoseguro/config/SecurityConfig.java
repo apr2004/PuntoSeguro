@@ -20,7 +20,7 @@ public class SecurityConfig {
         return http.csrf(c -> c.disable()).sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .requestCache(c -> c.disable()).formLogin(c -> c.disable()).httpBasic(c -> c.disable()).logout(c -> c.disable())
         .exceptionHandling(c -> c.authenticationEntryPoint(errors).accessDeniedHandler(errors))
-        .authorizeHttpRequests(a -> a.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll().requestMatchers(HttpMethod.POST,"/api/auth/login","/api/auth/register").permitAll().requestMatchers("/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html").permitAll().requestMatchers(HttpMethod.GET,"/api/auth/me").authenticated().anyRequest().denyAll())
+        .authorizeHttpRequests(a -> a.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll().requestMatchers(HttpMethod.POST,"/api/auth/login","/api/auth/register").permitAll().requestMatchers("/v3/api-docs/**","/swagger-ui/**","/swagger-ui.html").permitAll().requestMatchers("/api/**").authenticated().anyRequest().denyAll())
         .addFilterBefore(new JwtAuthenticationFilter(jwt,errors), UsernamePasswordAuthenticationFilter.class).build();
     }
 }
