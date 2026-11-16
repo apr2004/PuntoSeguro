@@ -3,4 +3,5 @@ import com.puntoseguro.entity.Observation; import org.springframework.data.jpa.r
 public interface ObservationRepository extends JpaRepository<Observation, Integer> {
  @Query("SELECT o FROM Observation o JOIN FETCH o.author WHERE o.student.id = :studentId ORDER BY o.fechaCreacion DESC, o.id DESC")
  List<Observation> findByStudentNewestFirst(@Param("studentId") Integer studentId);
+ java.util.Optional<Observation> findByIdAndStudentId(Integer id, Integer studentId);
 }
