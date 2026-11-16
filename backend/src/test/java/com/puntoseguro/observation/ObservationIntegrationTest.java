@@ -15,6 +15,11 @@ import java.net.http.*;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 import static org.junit.jupiter.api.Assertions.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import com.puntoseguro.security.JwtService;
+import com.puntoseguro.entity.enums.UserRole;
+import java.util.UUID;
 
 /** Contrato HTTP de las Observaciones de un alumno. */
 @Testcontainers @ActiveProfiles("dev") @SpringBootTest(webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -25,6 +30,8 @@ class ObservationIntegrationTest {
         p.add("puntoseguro.jwt.secret", () -> "ZGV2ZWxvcG1lbnQtb25seS1jaGFuZ2UtdGhpcy1zZWNyZXQta2V5LTAx");
     }
     @LocalServerPort int port;
+    @Autowired JdbcTemplate jdbc;
+    @Autowired JwtService jwt;
     HttpClient client=HttpClient.newHttpClient(); JsonMapper json=new JsonMapper();
     String profesor, centro, estudiante; int sid;
 
@@ -45,6 +52,7 @@ class ObservationIntegrationTest {
         profesor=login("profesor"); centro=login("centro"); estudiante=login("estudiante");
         var created=call("POST","students","{\"nombre\":\"Alumno\",\"apellidos\":\"Observado\"}",profesor);
         assertEquals(201,created.statusCode(),created.body()); sid=json.readTree(created.body()).get("id").asInt();
+        assertEquals(204,call("PUT","students/"+sid+"/teachers/"+me(profesor),null,centro).statusCode());
     }
 
     @Test void teacherCreatesObservationAuthoredByTheTokenUserRegardlessOfBody() throws Exception {
@@ -102,5 +110,53 @@ class ObservationIntegrationTest {
         assertEquals(404,call("POST","students/999999/observations",body("Texto"),profesor).statusCode());
         assertEquals(404,call("GET","students/999999/observations",null,profesor).statusCode());
         assertEquals(404,call("GET","students/999999/observations",null,centro).statusCode());
+    }
+
+    @Test void onlyCentreCanAssignAndRevocationImmediatelyBlocksTeacher() throws Exception {
+        String path="students/"+sid+"/teachers/"+me(profesor);
+        assertEquals(403,call("GET","teachers",null,profesor).statusCode());
+        assertEquals(403,call("GET","students/"+sid+"/teachers",null,profesor).statusCode());
+        assertEquals(200,call("GET","teachers",null,centro).statusCode());
+        assertEquals(me(profesor),json.readTree(call("GET","students/"+sid+"/teachers",null,centro).body()).get(0).get("id").asText());
+        assertEquals(404,call("PUT","students/"+sid+"/teachers/"+UUID.randomUUID(),null,centro).statusCode());
+        assertEquals(404,call("PUT","students/"+sid+"/teachers/"+me(estudiante),null,centro).statusCode());
+        assertEquals(403,call("DELETE",path,null,profesor).statusCode());
+        assertEquals(403,call("PUT",path,null,estudiante).statusCode());
+        assertEquals(204,call("PUT",path,null,centro).statusCode());
+        assertEquals(201,call("POST",observations(),body("Antes de revocar"),profesor).statusCode());
+        assertEquals(204,call("DELETE",path,null,centro).statusCode());
+        assertEquals(204,call("DELETE",path,null,centro).statusCode());
+        assertEquals(403,call("GET",observations(),null,profesor).statusCode());
+        assertEquals(403,call("POST",observations(),body("Después"),profesor).statusCode());
+        assertEquals(200,call("GET",observations(),null,centro).statusCode());
+        assertEquals(204,call("PUT",path,null,centro).statusCode());
+        assertEquals(200,call("GET",observations(),null,profesor).statusCode());
+    }
+
+    @Test void unassignedTeacherCannotReadCreateOrEditAndOnlyAuthorCanEdit() throws Exception {
+        UUID otherId=UUID.randomUUID();
+        jdbc.update("INSERT INTO usuario(id,nombre,email,password_hash,role,activo) SELECT ?, 'Otro docente', ?, password_hash, 'PROFESOR', true FROM usuario WHERE id=?::uuid",
+                otherId,"otro-"+otherId+"@puntoseguro.local",UUID.fromString(me(profesor)));
+        String other=jwt.issue(otherId,UserRole.PROFESOR);
+        String assignment="students/"+sid+"/teachers/"+otherId;
+        var made=call("POST",observations(),body("Original"),profesor);
+        assertEquals(201,made.statusCode(),made.body());
+        JsonNode original=json.readTree(made.body());
+        String edit=observations()+"/"+original.get("id").asInt();
+        assertEquals(403,call("GET",observations(),null,other).statusCode());
+        assertEquals(403,call("POST",observations(),body("Ajena"),other).statusCode());
+        assertEquals(403,call("PUT",edit,body("Ajena"),other).statusCode());
+        assertEquals(204,call("PUT",assignment,null,centro).statusCode());
+        assertEquals(200,call("GET",observations(),null,other).statusCode());
+        assertEquals(403,call("PUT",edit,body("Ajena"),other).statusCode());
+        var changed=call("PUT",edit,body("Corregida"),profesor);
+        assertEquals(200,changed.statusCode(),changed.body());
+        JsonNode correction=json.readTree(changed.body());
+        assertEquals(original.get("autor").get("id").asText(),correction.get("autor").get("id").asText());
+        assertEquals(original.get("fechaCreacion").asText(),correction.get("fechaCreacion").asText());
+        assertEquals("Corregida",correction.get("texto").asText());
+        assertEquals(200,call("PUT",edit,body("Corregida por el centro"),centro).statusCode());
+        assertEquals(404,call("PUT",observations()+"/999999",body("No existe"),centro).statusCode());
+        assertEquals(400,call("PUT",edit,body(" "),centro).statusCode());
     }
 }
