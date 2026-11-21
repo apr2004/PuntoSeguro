@@ -1,0 +1,25 @@
+.chat-page,.alerts-page{width:min(900px,86%);margin:42px auto 70px;flex:1}
+.chat-page .page-heading,.alerts-page .page-heading{margin-bottom:28px}
+.chat-page .page-heading p,.alerts-page .page-heading p{max-width:650px}
+.chat-panel{max-width:800px}
+.chat-messages{display:grid;gap:14px;max-height:55vh;overflow:auto;padding:4px 2px 18px}
+.chat-message{max-width:78%;padding:14px 16px;border-radius:14px;font-size:14px;line-height:1.6}
+.chat-message p{margin:5px 0 0;white-space:pre-wrap}
+.from-assistant{background:#f1f7f1;border:1px solid #e4eee4}
+.from-student{justify-self:end;background:#e1f1e8;color:#234f43}
+.chat-author{font-size:11px;font-weight:700;color:#6d8b7e}
+.chat-form{border-top:1px solid #edf1ec;padding-top:20px;margin-top:8px}
+.chat-form textarea{min-height:88px}
+.alert-list{display:grid;gap:12px}
+.alert-card{background:#f7faf6;border:1px solid #e6eee6;border-left:4px solid #8eb79f;border-radius:10px;padding:16px}
+.alert-card.urgency-preocupante{border-left-color:#d5a74f}
+.alert-card.urgency-riesgo_inminente{border-left-color:#b65c5c;background:#fff8f5}
+.alert-head{display:flex;justify-content:space-between;gap:12px;align-items:start}
+.alert-head strong,.alert-head span{display:block}
+.alert-head strong{color:#244b3f}
+.alert-head span,.alert-head small{color:#81968b;font-size:12px;margin-top:4px}
+.alert-card>p{color:#4e6d61;line-height:1.55}
+.alert-detail{border-top:1px solid #e5eee6;margin-top:14px;padding-top:10px}
+.alert-detail p{font-size:13px;color:#5d756b;line-height:1.5;margin:8px 0}
+.alerts-page .section-title .secondary{margin:0;padding:10px 14px}
+@media(max-width:760px){.chat-page,.alerts-page{width:90%;margin-top:30px}.chat-message{max-width:92%}.alert-head{display:block}.alert-head small{display:block;margin-top:10px}}
