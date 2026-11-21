@@ -14,6 +14,8 @@ function Observations({ token, studentId, role, userId }) {
   const [teachers, setTeachers] = useState([]);
   const [assigned, setAssigned] = useState([]);
   const [teacherId, setTeacherId] = useState('');
+  const [historyById, setHistoryById] = useState({});
+  const [historyLoading, setHistoryLoading] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [denied, setDenied] = useState(false);
@@ -22,7 +24,8 @@ function Observations({ token, studentId, role, userId }) {
 
   useEffect(() => {
     let alive = true;
-    setObservations([]); setTexto(''); setEditingId(null); setError(''); setNotice(''); setDenied(false); setLoading(true);
+    setObservations([]); setTexto(''); setEditingId(null); setHistoryById({}); setHistoryLoading(null);
+    setError(''); setNotice(''); setDenied(false); setLoading(true);
     const requests = [api(token, `/students/${studentId}/observations`)];
     if (role === 'CENTRO') requests.push(api(token, '/teachers'), api(token, `/students/${studentId}/teachers`));
     Promise.all(requests).then(([list, allTeachers, studentTeachers]) => {
@@ -42,6 +45,7 @@ function Observations({ token, studentId, role, userId }) {
       const path = `/students/${studentId}/observations${editingId ? `/${editingId}` : ''}`;
       await api(token, path, { method: editingId ? 'PUT' : 'POST', body: JSON.stringify({ texto }) });
       setObservations(await api(token, `/students/${studentId}/observations`));
+      setHistoryById({});
       setTexto(''); setEditingId(null); setNotice(editingId ? 'Observación corregida.' : 'Observación registrada.');
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
@@ -57,13 +61,33 @@ function Observations({ token, studentId, role, userId }) {
     finally { setBusy(false); }
   }
 
+  async function toggleHistory(id) {
+    if (historyById[id]) { setHistoryById(current => ({ ...current, [id]: null })); return; }
+    setHistoryLoading(id); setError('');
+    try {
+      const versions = await api(token, `/students/${studentId}/observations/${id}/history`);
+      setHistoryById(current => ({ ...current, [id]: versions }));
+    } catch (e) { setError(e.message); }
+    finally { setHistoryLoading(null); }
+  }
+
   return <section className="panel" aria-labelledby="observations-title">
     <div className="section-title"><div><h2 id="observations-title">Observaciones</h2><p>Seguimiento aportado por los docentes.</p></div><span className="count">{observations.length}</span></div>
     <p className="message disclaimer" role="note">Las observaciones son información de seguimiento y no constituyen un caso confirmado.</p>
     {error && <p className="message error" role="alert">{error}</p>}{notice && <p className="message success" role="status">{notice}</p>}
     {loading ? <p role="status">Cargando observaciones…</p> : denied ? null : observations.length === 0 ? <p className="empty">Todavía no hay observaciones.</p> :
-      <div className="record-list">{observations.map(o => <article className="record observation" key={o.id}><div><p className="observation-text">{o.texto}</p><small>{o.autor.nombre} · <time dateTime={o.fechaCreacion}>{formatDate(o.fechaCreacion)}</time></small></div>
-        {(role === 'CENTRO' || o.autor.id === userId) && <div className="record-actions"><button type="button" disabled={busy} onClick={() => { setEditingId(o.id); setTexto(o.texto); setError(''); setNotice(''); }}>Corregir</button></div>}
+      <div className="record-list">{observations.map(o => <article className="record observation" key={o.id}>
+        <div>
+          <p className="observation-text">{o.texto}</p>
+          <small>{o.autor.nombre} · <time dateTime={o.fechaCreacion}>{formatDate(o.fechaCreacion)}</time></small>
+          {historyById[o.id] && <ol className="observation-history" aria-label={`Historial de la observación de ${o.autor.nombre}`}>
+            {historyById[o.id].map(version => <li key={version.id}><p>{version.texto}</p><small>{version.autor.nombre} · <time dateTime={version.fechaEdicion}>{formatDate(version.fechaEdicion)}</time></small></li>)}
+          </ol>}
+        </div>
+        <div className="record-actions">
+          <button type="button" onClick={() => toggleHistory(o.id)} disabled={historyLoading === o.id}>{historyLoading === o.id ? 'Cargando…' : historyById[o.id] ? 'Ocultar historial' : 'Ver historial'}</button>
+          {(role === 'CENTRO' || o.autor.id === userId) && <button type="button" disabled={busy} onClick={() => { setEditingId(o.id); setTexto(o.texto); setError(''); setNotice(''); }}>Corregir</button>}
+        </div>
       </article>)}</div>}
     {editingId && <form className="entry-form" onSubmit={save}><h3>Corregir observación</h3>
       <label>Texto<textarea required rows="4" value={texto} onChange={e => setTexto(e.target.value)} aria-invalid={tooLong}/></label>
