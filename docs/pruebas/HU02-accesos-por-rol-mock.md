@@ -4,18 +4,18 @@
 **Historia padre:** [#8](https://github.com/apr2004/PuntoSeguro/issues/8)<br>
 **Tipo de comprobación:** escenarios manuales con usuarios, relaciones y observaciones ficticios
 
-> Esto documenta una simulación del contrato de HU02, no una ejecución contra la aplicación. En el `main` revisado no hay modelo, endpoint ni servicio de observaciones. Las tareas de implementación de permisos (#10) y autoría/historial (#12) siguen abiertas. No se debe tomar esta matriz como evidencia de que el producto ya aplica estos permisos.
+> El contrato ya está implementado en `main` mediante #9/PR #30 y #10/PR #33. Ejecuté `ObservationIntegrationTest` contra el commit `66536f0` de `main`: 7 pruebas pasaron. Esta suite no cubre todos los perfiles ni todos los límites definidos originalmente en esta matriz; los resultados siguientes distinguen lo comprobado de lo pendiente.
 
-## Política simulada
+## Comportamiento implementado comprobado
 
-- El docente asignado al alumno puede consultar, crear y modificar sus observaciones.
-- El docente no asignado, el alumnado y el tutor legal no pueden consultar ni modificar observaciones de HU02. La historia restringe la consulta a personal autorizado del centro.
-- La administración autorizada del centro puede consultar y gestionar observaciones dentro de su centro.
-- Toda creación registra como autor al usuario autenticado y una fecha UTC; una edición conserva su historial.
-- Un texto de observación no convierte automáticamente los hechos en un caso confirmado de acoso.
-- Sin sesión válida, la API devuelve `401`. Para una sesión válida sin permiso se espera `403`, sin contenido de la observación.
+- Un docente asignado puede consultar y crear observaciones, y editar las propias mientras mantenga la asignación.
+- Un docente sin asignación y el alumnado reciben `403` al intentar acceder a observaciones.
+- `CENTRO` puede consultar y editar observaciones, pero no crearlas (`403`). El alcance multi-centro no está implementado ni comprobado.
+- El servidor establece autor y fecha de creación; al editar, conserva ambos valores.
+- Las peticiones sin sesión reciben `401`.
+- El modelo de Observación no la convierte automáticamente en un Reporte ni en un caso confirmado; este punto no se prueba como flujo de negocio en `ObservationIntegrationTest`.
 
-**Suposición de la simulación:** el perfil `CENTRO` representa a administración autorizada. El modelo actual no distingue administración de otros usuarios del centro ni incluye el rol de tutor legal. Si ClickUp o el Product Owner define permisos distintos para tutores o administración, habrá que ajustar esta expectativa.
+**Límites del modelo actual:** solo existen los roles `PROFESOR`, `CENTRO` y `ESTUDIANTE`; no hay rol de tutor legal ni una relación que permita comprobar el aislamiento entre centros. Por tanto, esos dos requisitos no se pueden validar con el contrato actual.
 
 ## Datos ficticios
 
@@ -35,17 +35,18 @@ No se usan datos de personas reales.
 |---|---|---|---|
 | R1 | Docente asignado consulta `obs-001` | Permitido (`200`); devuelve solo la observación de `alumno-001` | La asignación coincide con el alumno |
 | R2 | Docente asignado crea una observación para `alumno-001` | Permitido (`201`); autor `profesor-001` y fecha UTC generados por el servidor | El cliente no puede elegir otro autor ni alterar la fecha de creación |
-| R3 | Docente asignado modifica `obs-001` | Permitido (`200`); se añade una entrada al historial | La autoría inicial y la edición quedan identificables |
+| R3 | Docente asignado modifica una observación propia | Permitido (`200`); se conservan autor y fecha de creación | La edición está cubierta; la nueva entrada en historial queda pendiente de #12/PR #35 |
 | R4 | Docente no asignado consulta, crea o modifica para `alumno-001` | Denegado (`403`); no devuelve texto ni modifica datos | Cambiar el identificador de alumno no evita la autorización |
 | R5 | Alumno intenta consultar, crear o modificar observaciones | Denegado (`403`); no devuelve texto ni modifica datos | El acceso autenticado no equivale a permiso por rol |
-| R6 | Tutor legal consulta, crea o modifica observaciones | Denegado (`403`) según la política actual de HU02 | Validar este supuesto con el Product Owner si HU06 amplía el acceso de tutores |
-| R7 | Administración autorizada consulta o gestiona una observación de `centro-A` | Permitido (`200`/`201`); solo dentro de `centro-A` | El alcance del centro se comprueba además del rol |
-| R8 | Cualquier perfil llama sin token o con token inválido | Denegado (`401`) | No se revela si `obs-001` existe |
-| R9 | Un usuario crea una observación con hechos no verificados | Se conserva como observación pendiente de valoración; nunca se etiqueta automáticamente como caso confirmado | El texto de la observación no dispara una confirmación automática |
+| R6 | Tutor legal consulta, crea o modifica observaciones | No ejecutable: el rol y la relación tutor-alumno no existen | Definir el perfil antes de implementar este caso |
+| R7 | `CENTRO` consulta, intenta crear o edita una observación | Consulta y edición permitidas; creación denegada (`403`) | La suite no verifica aislamiento multi-centro; no se debe afirmar que `centro-A` está aislado |
+| R8 | Un usuario llama sin token | Denegado (`401`) y cubierto por la suite | Un token inválido no figura como caso independiente en la suite actual |
+| R9 | Se registra un texto con hechos no verificados | No hay verificación automatizada de la valoración del texto | La Observación está separada del Reporte; hace falta una prueba específica si se exige este criterio |
 
-## Resultado de la simulación
+## Resultado de la ejecución
 
-- **5/5 perfiles** incluidos: docente asignado, docente no asignado, alumno, tutor legal y administración.
-- Las acciones permitidas y denegadas quedan definidas para consulta, creación y modificación.
-- Se cubren autenticación, alcance del centro, autoría, historial y la distinción entre observación y caso confirmado.
-- **Ejecución contra la aplicación: pendiente.** No se puede obtener un resultado HTTP real hasta integrar observaciones y permisos (#10, #12). Repetir R1–R9 con datos ficticios en esa integración y registrar las respuestas observadas antes de cerrar la issue.
+- **Resultado automatizado:** `ObservationIntegrationTest` — 7 ejecutadas, 7 pasaron, 0 fallos, contra PostgreSQL 17 con datos ficticios.
+- R1, R2, R4 y R5 están cubiertos; R3 verifica edición y conservación de autor/fecha, pero no historial.
+- `#9` y `#10` están integradas. `#12` sigue abierta en la PR #35; al integrarse, ejecutar y registrar la comprobación de historial.
+- R6 no se puede ejecutar hasta que exista un rol de tutor. R7 requiere definir e implementar el aislamiento entre centros. R9 necesita una prueba específica del criterio de no-confirmación.
+- **La issue #11 sigue abierta** hasta resolver esos límites y registrar los casos aplicables contra el producto.
