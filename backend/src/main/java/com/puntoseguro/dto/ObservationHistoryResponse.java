@@ -12,4 +12,5 @@ public class ObservationHistoryResponse {
     private String texto;
     private AuthorResponse autor;
     private LocalDateTime fechaEdicion;
+    private boolean importado;
 }

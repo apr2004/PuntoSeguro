@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { api } from './api';
 
 const MAX_LENGTH = 2000;
@@ -15,16 +15,21 @@ function Observations({ token, studentId, role, userId }) {
   const [assigned, setAssigned] = useState([]);
   const [teacherId, setTeacherId] = useState('');
   const [historyById, setHistoryById] = useState({});
-  const [historyLoading, setHistoryLoading] = useState(null);
+  const [historyLoading, setHistoryLoading] = useState({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [denied, setDenied] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  // Invalida las peticiones de historial lanzadas antes de guardar una corrección.
+  const historyEpoch = useRef(0);
+  const historyRequests = useRef({});
 
   useEffect(() => {
     let alive = true;
-    setObservations([]); setTexto(''); setEditingId(null); setHistoryById({}); setHistoryLoading(null);
+    historyEpoch.current += 1;
+    historyRequests.current = {};
+    setObservations([]); setTexto(''); setEditingId(null); setHistoryById({}); setHistoryLoading({});
     setError(''); setNotice(''); setDenied(false); setLoading(true);
     const requests = [api(token, `/students/${studentId}/observations`)];
     if (role === 'CENTRO') requests.push(api(token, '/teachers'), api(token, `/students/${studentId}/teachers`));
@@ -41,12 +46,16 @@ function Observations({ token, studentId, role, userId }) {
 
   async function save(event) {
     event.preventDefault(); setBusy(true); setError(''); setNotice('');
+    const editing = editingId;
     try {
-      const path = `/students/${studentId}/observations${editingId ? `/${editingId}` : ''}`;
-      await api(token, path, { method: editingId ? 'PUT' : 'POST', body: JSON.stringify({ texto }) });
+      const path = `/students/${studentId}/observations${editing ? `/${editing}` : ''}`;
+      await api(token, path, { method: editing ? 'PUT' : 'POST', body: JSON.stringify({ texto }) });
+      // Una respuesta de historial anterior ya no refleja el texto guardado.
+      historyEpoch.current += 1;
+      historyRequests.current = {};
+      setHistoryLoading({}); setHistoryById({});
       setObservations(await api(token, `/students/${studentId}/observations`));
-      setHistoryById({});
-      setTexto(''); setEditingId(null); setNotice(editingId ? 'Observación corregida.' : 'Observación registrada.');
+      setTexto(''); setEditingId(null); setNotice(editing ? 'Observación corregida.' : 'Observación registrada.');
     } catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
@@ -63,12 +72,18 @@ function Observations({ token, studentId, role, userId }) {
 
   async function toggleHistory(id) {
     if (historyById[id]) { setHistoryById(current => ({ ...current, [id]: null })); return; }
-    setHistoryLoading(id); setError('');
+    const epoch = historyEpoch.current;
+    const request = (historyRequests.current[id] || 0) + 1;
+    historyRequests.current[id] = request;
+    setHistoryLoading(current => ({ ...current, [id]: true })); setError('');
+    const isCurrent = () => epoch === historyEpoch.current && request === historyRequests.current[id];
     try {
       const versions = await api(token, `/students/${studentId}/observations/${id}/history`);
-      setHistoryById(current => ({ ...current, [id]: versions }));
-    } catch (e) { setError(e.message); }
-    finally { setHistoryLoading(null); }
+      if (isCurrent()) setHistoryById(current => ({ ...current, [id]: versions }));
+    } catch (e) { if (isCurrent()) setError(e.message); }
+    finally {
+      if (isCurrent()) setHistoryLoading(current => { const next = { ...current }; delete next[id]; return next; });
+    }
   }
 
   return <section className="panel" aria-labelledby="observations-title">
@@ -80,12 +95,15 @@ function Observations({ token, studentId, role, userId }) {
         <div>
           <p className="observation-text">{o.texto}</p>
           <small>{o.autor.nombre} · <time dateTime={o.fechaCreacion}>{formatDate(o.fechaCreacion)}</time></small>
-          {historyById[o.id] && <ol className="observation-history" aria-label={`Historial de la observación de ${o.autor.nombre}`}>
-            {historyById[o.id].map(version => <li key={version.id}><p>{version.texto}</p><small>{version.autor.nombre} · <time dateTime={version.fechaEdicion}>{formatDate(version.fechaEdicion)}</time></small></li>)}
-          </ol>}
+          {historyById[o.id] && <>
+            <ol className="observation-history" aria-label={`Historial de la observación de ${o.autor.nombre}`}>
+              {historyById[o.id].map(version => <li key={version.id}><p>{version.texto}</p><small>{version.autor.nombre} · <time dateTime={version.fechaEdicion}>{formatDate(version.fechaEdicion)}</time>{version.importado && <span className="imported-version">Versión importada</span>}</small></li>)}
+            </ol>
+            {historyById[o.id].some(version => version.importado) && <p className="hint">El historial empezó después de esta observación. Si ya se había corregido antes, esas ediciones no se pueden reconstruir.</p>}
+          </>}
         </div>
         <div className="record-actions">
-          <button type="button" onClick={() => toggleHistory(o.id)} disabled={historyLoading === o.id}>{historyLoading === o.id ? 'Cargando…' : historyById[o.id] ? 'Ocultar historial' : 'Ver historial'}</button>
+          <button type="button" onClick={() => toggleHistory(o.id)} disabled={historyLoading[o.id]}>{historyLoading[o.id] ? 'Cargando…' : historyById[o.id] ? 'Ocultar historial' : 'Ver historial'}</button>
           {(role === 'CENTRO' || o.autor.id === userId) && <button type="button" disabled={busy} onClick={() => { setEditingId(o.id); setTexto(o.texto); setError(''); setNotice(''); }}>Corregir</button>}
         </div>
       </article>)}</div>}

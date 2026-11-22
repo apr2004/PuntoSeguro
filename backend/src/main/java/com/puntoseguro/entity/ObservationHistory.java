@@ -29,4 +29,8 @@ public class ObservationHistory {
 
     @Column(name = "fecha_edicion", nullable = false)
     private LocalDateTime fechaEdicion;
+
+    /** true si la versión se copió de una observación anterior a la existencia del historial. */
+    @Column(nullable = false)
+    private boolean importado;
 }

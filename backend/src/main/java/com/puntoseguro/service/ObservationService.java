@@ -121,6 +121,7 @@ public class ObservationService {
         version.setEditor(editor);
         version.setTexto(observation.getTexto());
         version.setFechaEdicion(date);
+        version.setImportado(false);
         history.saveAndFlush(version);
     }
 

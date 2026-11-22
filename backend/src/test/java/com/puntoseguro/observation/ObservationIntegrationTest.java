@@ -136,6 +136,13 @@ class ObservationIntegrationTest {
         assertEquals("Texto corregido",versions.get(1).get("texto").asText());
         assertEquals(me(centro),versions.get(1).get("autor").get("id").asText());
         assertTrue(versions.get(1).get("fechaEdicion").asText().compareTo(versions.get(0).get("fechaEdicion").asText()) >= 0);
+        assertFalse(versions.get(0).get("importado").asBoolean());
+        assertFalse(versions.get(1).get("importado").asBoolean());
+
+        jdbc.update("UPDATE observacion_historial SET importado = TRUE WHERE id = ?", versions.get(0).get("id").asInt());
+        JsonNode imported=json.readTree(call("GET",observations()+"/"+id+"/history",null,centro).body());
+        assertTrue(imported.get(0).get("importado").asBoolean());
+        assertFalse(imported.get(1).get("importado").asBoolean());
 
         assertEquals(403,call("PUT",observations()+"/"+id,body("Edición no permitida"),estudiante).statusCode());
         assertEquals(403,call("GET",observations()+"/"+id+"/history",null,estudiante).statusCode());
