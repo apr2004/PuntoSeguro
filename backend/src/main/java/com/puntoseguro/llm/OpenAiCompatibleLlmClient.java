@@ -1,18 +1,28 @@
 package com.puntoseguro.llm;
 import org.springframework.http.client.JdkClientHttpRequestFactory; import org.springframework.stereotype.Component; import org.springframework.web.client.RestClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import tools.jackson.databind.JsonNode;
 import java.net.http.HttpClient; import java.time.Duration; import java.util.List; import java.util.Map;
 /** Adaptador de cualquier API compatible con OpenAI (`chat/completions`): Groq u Ollama. Salida forzada por esquema JSON y temperature 0. */
 @Component public class OpenAiCompatibleLlmClient implements LlmClient {
     private final RestClient http; private final String model; private final boolean configured;
 
+    @Autowired
     public OpenAiCompatibleLlmClient(LlmProperties properties) {
+        this(properties, builderWithTimeout(properties));
+    }
+
+    OpenAiCompatibleLlmClient(LlmProperties properties, RestClient.Builder builder) {
+        configured = properties.getApiKey() != null && !properties.getApiKey().isBlank();
+        http = builder.baseUrl(properties.getUrl()).defaultHeader("Authorization", "Bearer " + properties.getApiKey()).build();
+        model = properties.getModel();
+    }
+
+    private static RestClient.Builder builderWithTimeout(LlmProperties properties) {
         var timeout = Duration.ofSeconds(properties.getTimeoutSeconds());
         var factory = new JdkClientHttpRequestFactory(HttpClient.newBuilder().connectTimeout(timeout).build());
         factory.setReadTimeout(timeout);
-        configured = properties.getApiKey() != null && !properties.getApiKey().isBlank();
-        http = RestClient.builder().baseUrl(properties.getUrl()).requestFactory(factory).defaultHeader("Authorization", "Bearer " + properties.getApiKey()).build();
-        model = properties.getModel();
+        return RestClient.builder().requestFactory(factory);
     }
 
     @Override public String generate(String systemPrompt, String userMessage, Map<String, Object> jsonSchema) {

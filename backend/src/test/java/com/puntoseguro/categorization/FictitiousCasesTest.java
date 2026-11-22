@@ -1,11 +1,13 @@
 package com.puntoseguro.categorization;
 
 import com.puntoseguro.dto.CategorizationResponse;
+import com.puntoseguro.dto.ChatResponse;
 import com.puntoseguro.dto.ReportMessage;
 import com.puntoseguro.entity.enums.MessageRole;
 import com.puntoseguro.llm.LlmProperties;
 import com.puntoseguro.llm.OpenAiCompatibleLlmClient;
 import com.puntoseguro.service.ImminentRiskDetector;
+import com.puntoseguro.service.ChatbotService;
 import com.puntoseguro.service.ReportCategorizationService;
 import jakarta.validation.Validation;
 import org.junit.jupiter.api.BeforeAll;
@@ -29,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @EnabledIf("llmConfigured")
 class FictitiousCasesTest {
     static ReportCategorizationService service;
+    static ChatbotService chatbot;
 
     static boolean llmConfigured() { return !env("PUNTOSEGURO_LLM_API_KEY", "").isBlank(); }
     static String env(String name, String fallback) { return Optional.ofNullable(System.getenv(name)).orElse(fallback); }
@@ -39,7 +42,11 @@ class FictitiousCasesTest {
         p.setModel(env("PUNTOSEGURO_LLM_MODELO", "openai/gpt-oss-20b"));
         p.setApiKey(env("PUNTOSEGURO_LLM_API_KEY", ""));
         p.setTimeoutSeconds(Integer.parseInt(env("PUNTOSEGURO_LLM_TIMEOUT", "60")));
-        service = new ReportCategorizationService(new OpenAiCompatibleLlmClient(p), new ImminentRiskDetector(), new JsonMapper(), Validation.buildDefaultValidatorFactory().getValidator());
+        var llm = new OpenAiCompatibleLlmClient(p);
+        var json = new JsonMapper();
+        var validator = Validation.buildDefaultValidatorFactory().getValidator();
+        service = new ReportCategorizationService(llm, new ImminentRiskDetector(), json, validator);
+        chatbot = new ChatbotService(llm, json, validator);
     }
 
     static CategorizationResponse student(String... texts) {
@@ -88,5 +95,16 @@ class FictitiousCasesTest {
     @Test void ambiguous() {
         var c = student("Hoy me he peleado con mi mejor amiga y estoy triste.");
         assertTrue(Set.of(NO, DUDOSO).contains(c.getEsAcoso())); assertNotEquals(RIESGO_INMINENTE, c.getNivelUrgencia());
+    }
+
+    @Test void chatbotGuidesAStudentWhoIsSupportingAClassmate() {
+        ChatResponse response = chatbot.reply(List.of(new ReportMessage(MessageRole.ALUMNO,
+                "A una compañera la dejan sola y se ríen de ella casi todos los días. Yo no soy la persona a la que le pasa. ¿Qué puedo hacer para ayudarla y contárselo al centro?")));
+
+        String text = response.getRespuesta().toLowerCase(Locale.ROOT);
+        assertFalse(text.isBlank());
+        assertFalse(text.matches("(?s).*\\b(eres|serías|te considero)\\s+(la\\s+)?víctima\\b.*"));
+        assertTrue(List.of("adulto", "profesor", "tutor", "orientación", "centro").stream().anyMatch(text::contains),
+                "La respuesta debería orientar sobre cómo pedir apoyo a una persona adulta o al centro.");
     }
 }
