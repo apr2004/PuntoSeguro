@@ -1,2 +1,2 @@
 package com.puntoseguro.entity.enums;
-public enum UserRole { ESTUDIANTE, PROFESOR, CENTRO }
+public enum UserRole { ESTUDIANTE, PROFESOR, CENTRO, TUTOR_LEGAL }

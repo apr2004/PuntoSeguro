@@ -50,7 +50,7 @@ class ObservationIntegrationTest {
 
     @BeforeEach void setUp() throws Exception {
         profesor=login("profesor"); centro=login("centro"); estudiante=login("estudiante");
-        var created=call("POST","students","{\"nombre\":\"Alumno\",\"apellidos\":\"Observado\"}",profesor);
+        var created=call("POST","students","{\"nombre\":\"Alumno\",\"apellidos\":\"Observado\"}",centro);
         assertEquals(201,created.statusCode(),created.body()); sid=json.readTree(created.body()).get("id").asInt();
         assertEquals(204,call("PUT","students/"+sid+"/teachers/"+me(profesor),null,centro).statusCode());
     }
@@ -172,6 +172,44 @@ class ObservationIntegrationTest {
         assertEquals(200,call("GET",observations(),null,centro).statusCode());
         assertEquals(204,call("PUT",path,null,centro).statusCode());
         assertEquals(200,call("GET",observations(),null,profesor).statusCode());
+    }
+
+    @Test void academicDataAccessFollowsRolesAndLinks() throws Exception {
+        String studentId=me(estudiante);
+        String link="students/"+sid+"/links/"+studentId;
+        assertEquals(0,json.readTree(call("GET","students",null,estudiante).body()).size());
+        assertEquals(403,call("GET","students/"+sid,null,estudiante).statusCode());
+        assertEquals(403,call("PUT",link,null,profesor).statusCode());
+        assertEquals(204,call("PUT",link,null,centro).statusCode());
+        assertEquals(200,call("GET","students/"+sid,null,estudiante).statusCode());
+        assertEquals(200,call("GET","students/"+sid+"/grades",null,estudiante).statusCode());
+        assertEquals(200,call("GET","students/"+sid+"/attendance",null,estudiante).statusCode());
+        assertEquals(1,json.readTree(call("GET","students",null,estudiante).body()).size());
+        assertEquals(403,call("PUT","students/"+sid,"{\"nombre\":\"Cambio\",\"apellidos\":\"Prueba\"}",estudiante).statusCode());
+        assertEquals(403,call("POST","students","{\"nombre\":\"Nuevo\",\"apellidos\":\"Alumno\"}",profesor).statusCode());
+        assertEquals(200,call("PUT","students/"+sid,"{\"nombre\":\"Cambio\",\"apellidos\":\"Prueba\"}",profesor).statusCode());
+        assertEquals(204,call("DELETE",link,null,centro).statusCode());
+        assertEquals(403,call("GET","students/"+sid,null,estudiante).statusCode());
+        assertEquals(204,call("DELETE","students/"+sid+"/teachers/"+me(profesor),null,centro).statusCode());
+        assertEquals(403,call("GET","students/"+sid+"/grades",null,profesor).statusCode());
+        assertEquals(200,call("GET","students/"+sid+"/grades",null,centro).statusCode());
+    }
+
+    @Test void centreAssignsGuardianRoleAndRevokesOldSessionAndLinks() throws Exception {
+        String uid=me(estudiante);
+        String role="users/"+uid+"/role";
+        assertEquals(403,call("PUT",role,"{\"role\":\"TUTOR_LEGAL\"}",profesor).statusCode());
+        assertEquals(204,call("PUT",role,"{\"role\":\"TUTOR_LEGAL\"}",centro).statusCode());
+        assertEquals(401,call("GET","students",null,estudiante).statusCode());
+        String tutor=jwt.issue(UUID.fromString(uid),UserRole.TUTOR_LEGAL);
+        assertEquals(403,call("GET","students/"+sid,null,tutor).statusCode());
+        assertEquals(204,call("PUT","students/"+sid+"/links/"+uid,null,centro).statusCode());
+        assertEquals(200,call("GET","students/"+sid+"/attendance",null,tutor).statusCode());
+        assertEquals(403,call("POST","students/"+sid+"/grades","{}",tutor).statusCode());
+        assertEquals(403,call("GET",observations(),null,tutor).statusCode());
+        assertEquals(204,call("PUT",role,"{\"role\":\"ESTUDIANTE\"}",centro).statusCode());
+        assertEquals(401,call("GET","students",null,estudiante).statusCode());
+        assertEquals(403,call("GET","students/"+sid,null,jwt.issue(UUID.fromString(uid),UserRole.ESTUDIANTE)).statusCode());
     }
 
     @Test void unassignedTeacherCannotReadCreateOrEditAndOnlyAuthorCanEdit() throws Exception {

@@ -2,8 +2,10 @@ package com.puntoseguro.service;
 import com.puntoseguro.dto.*; import com.puntoseguro.entity.*; import com.puntoseguro.repository.*; import com.puntoseguro.mapper.StudentDataMapper;
 import lombok.RequiredArgsConstructor; import org.springframework.http.HttpStatus; import org.springframework.stereotype.Service; import org.springframework.transaction.annotation.Transactional; import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime; import java.time.ZoneOffset; import java.util.List;
+import com.puntoseguro.security.PuntoSeguroPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 @Service @RequiredArgsConstructor @Transactional public class StudentDataService {
- private final StudentRepository students; private final SubjectRepository subjects; private final SourcePlatformRepository platforms; private final AttendanceTypeRepository types; private final GradeRepository grades; private final AttendanceRepository attendance; private final StudentDataMapper mapper;
+ private final StudentRepository students; private final SubjectRepository subjects; private final SourcePlatformRepository platforms; private final AttendanceTypeRepository types; private final GradeRepository grades; private final AttendanceRepository attendance; private final StudentDataMapper mapper; private final StudentAccessService access;
  private ResponseStatusException missing(String what) { return new ResponseStatusException(HttpStatus.NOT_FOUND,what+" no encontrado"); }
  private Student student(Integer id) { return students.findById(id).orElseThrow(() -> missing("Estudiante")); }
  private Subject subject(Integer id) { return subjects.findById(id).orElseThrow(() -> missing("Asignatura")); }
@@ -11,7 +13,7 @@ import java.time.LocalDateTime; import java.time.ZoneOffset; import java.util.Li
  private AttendanceType type(Integer id) { return types.findById(id).orElseThrow(() -> missing("Tipo de asistencia")); }
  private Grade grade(Integer sid,Integer id) { return grades.findByIdAndStudentId(id,sid).orElseThrow(() -> missing("Calificación")); }
  private Attendance attendance(Integer sid,Integer id) { return attendance.findByIdAndStudentId(id,sid).orElseThrow(() -> missing("Asistencia")); }
- @Transactional(readOnly=true) public List<StudentResponse> listStudents() { return students.findAll().stream().map(mapper::student).toList(); }
+ @Transactional(readOnly=true) public List<StudentResponse> listStudents() { PuntoSeguroPrincipal p=(PuntoSeguroPrincipal)SecurityContextHolder.getContext().getAuthentication().getPrincipal(); return students.findAll().stream().filter(s -> access.canRead(p,s.getId())).map(mapper::student).toList(); }
  @Transactional(readOnly=true) public StudentResponse getStudent(Integer id) { return mapper.student(student(id)); }
  public StudentResponse saveStudent(Integer id,StudentRequest r) { Student s=id==null?new Student():student(id); s.setNombre(r.getNombre().trim()); s.setApellidos(r.getApellidos().trim()); s.setCurso(r.getCurso()); s.setGrupo(r.getGrupo()); return mapper.student(students.saveAndFlush(s)); }
  public void deleteStudent(Integer id) { students.delete(student(id)); students.flush(); }

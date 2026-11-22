@@ -13,4 +13,5 @@ public class UserEntity {
     @Column(name="password_hash", nullable=false) private String passwordHash;
     @Enumerated(EnumType.STRING) @Column(nullable=false, length=20) private UserRole role;
     @Column(nullable=false) private boolean activo;
+    @Column(name="version_seguridad",nullable=false) private long securityVersion;
 }
