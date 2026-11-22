@@ -5,6 +5,7 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import com.puntoseguro.entity.enums.UserRole;
+import com.puntoseguro.repository.UserRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.Date;
@@ -20,11 +21,13 @@ public class JwtService {
     private final JwtParser jwtParser;
     private final JwtProperties properties;
     private final Clock jwtClock;
+    private final UserRepository users;
 
     public String issue(UUID userId, UserRole role) {
         Instant now = jwtClock.instant();
         return Jwts.builder().subject(userId.toString())
                 .claim("role", role.name())
+                .claim("version", users.findById(userId).orElseThrow(() -> new JwtException("Usuario no válido.")).getSecurityVersion())
                 .issuer(properties.getIssuer()).audience().add(properties.getAudience()).and()
                 .issuedAt(Date.from(now)).expiration(Date.from(now.plusSeconds(properties.getAccessTokenTtlSeconds())))
                 .id(UUID.randomUUID().toString()).signWith(jwtSigningKey, Jwts.SIG.HS256).compact();
@@ -45,6 +48,10 @@ public class JwtService {
         String claimRole = claims.get("role", String.class);
         if (claimRole == null) throw new JwtException("Token sin rol.");
         UserRole role = UserRole.valueOf(claimRole);
+        Number version=claims.get("version", Number.class);
+        if (version == null || users.findById(userId).filter(u -> u.isActivo() && u.getRole()==role && u.getSecurityVersion()==version.longValue()).isEmpty()) {
+            throw new JwtException("Sesión revocada.");
+        }
         return new PuntoSeguroPrincipal(userId, role);
     }
 

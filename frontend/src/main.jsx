@@ -6,7 +6,7 @@ import StudentData from './StudentData';
 import ReportChat from './ReportChat';
 import Alerts from './Alerts';
 
-const roleLabels = { ESTUDIANTE: 'Estudiante', PROFESOR: 'Profesor', CENTRO: 'Centro' };
+const roleLabels = { ESTUDIANTE: 'Estudiante', PROFESOR: 'Profesor', CENTRO: 'Centro', TUTOR_LEGAL: 'Tutor legal' };
 async function request(path, options = {}) {
   const response = await fetch(`/api/auth/${path}`, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers } });
   const data = await response.json().catch(() => ({}));

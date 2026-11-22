@@ -54,7 +54,7 @@ class AuthIntegrationTest {
     }
     @Test void studentRecordsCrudAndFailedUpdatePreservesData() throws Exception {
         assertEquals(401,data("GET","students",null,null).statusCode());
-        var login=call("POST","login","{\"email\":\"profesor@puntoseguro.local\",\"password\":\"puntoseguro\"}",null);
+        var login=call("POST","login","{\"email\":\"centro@puntoseguro.local\",\"password\":\"puntoseguro\"}",null);
         String token=json.readTree(login.body()).get("accessToken").asText();
         var created=data("POST","students","{\"nombre\":\"Test\",\"apellidos\":\"Alumno\",\"curso\":\"1 ESO\",\"grupo\":\"A\"}",token);
         assertEquals(201,created.statusCode(),created.body()); int sid=json.readTree(created.body()).get("id").asInt();
