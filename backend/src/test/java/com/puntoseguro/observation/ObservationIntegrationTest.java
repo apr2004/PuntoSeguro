@@ -112,6 +112,47 @@ class ObservationIntegrationTest {
         assertEquals(404,call("GET","students/999999/observations",null,centro).statusCode());
     }
 
+    @Test void editingObservationPreservesCreationAndExposesImmutableHistory() throws Exception {
+        var created=call("POST",observations(),body("Texto inicial"),profesor);
+        assertEquals(201,created.statusCode(),created.body());
+        JsonNode original=json.readTree(created.body());
+        int id=original.get("id").asInt();
+        String originalAuthor=original.get("autor").get("id").asText();
+        String originalDate=original.get("fechaCreacion").asText();
+
+        var edited=call("PUT",observations()+"/"+id,body("Texto corregido"),centro);
+        assertEquals(200,edited.statusCode(),edited.body());
+        JsonNode current=json.readTree(edited.body());
+        assertEquals("Texto corregido",current.get("texto").asText());
+        assertEquals(originalAuthor,current.get("autor").get("id").asText());
+        assertEquals(originalDate,current.get("fechaCreacion").asText());
+
+        var history=call("GET",observations()+"/"+id+"/history",null,centro);
+        assertEquals(200,history.statusCode(),history.body());
+        JsonNode versions=json.readTree(history.body());
+        assertEquals(2,versions.size());
+        assertEquals("Texto inicial",versions.get(0).get("texto").asText());
+        assertEquals(originalAuthor,versions.get(0).get("autor").get("id").asText());
+        assertEquals("Texto corregido",versions.get(1).get("texto").asText());
+        assertEquals(me(centro),versions.get(1).get("autor").get("id").asText());
+        assertTrue(versions.get(1).get("fechaEdicion").asText().compareTo(versions.get(0).get("fechaEdicion").asText()) >= 0);
+        assertFalse(versions.get(0).get("importado").asBoolean());
+        assertFalse(versions.get(1).get("importado").asBoolean());
+
+        jdbc.update("UPDATE observacion_historial SET importado = TRUE WHERE id = ?", versions.get(0).get("id").asInt());
+        JsonNode imported=json.readTree(call("GET",observations()+"/"+id+"/history",null,centro).body());
+        assertTrue(imported.get(0).get("importado").asBoolean());
+        assertFalse(imported.get(1).get("importado").asBoolean());
+
+        assertEquals(403,call("PUT",observations()+"/"+id,body("Edición no permitida"),estudiante).statusCode());
+        assertEquals(403,call("GET",observations()+"/"+id+"/history",null,estudiante).statusCode());
+    }
+
+    @Test void editingMissingObservationIsNotFound() throws Exception {
+        assertEquals(404,call("PUT",observations()+"/999999",body("Texto"),profesor).statusCode());
+        assertEquals(404,call("GET",observations()+"/999999/history",null,profesor).statusCode());
+    }
+
     @Test void onlyCentreCanAssignAndRevocationImmediatelyBlocksTeacher() throws Exception {
         String path="students/"+sid+"/teachers/"+me(profesor);
         assertEquals(403,call("GET","teachers",null,profesor).statusCode());

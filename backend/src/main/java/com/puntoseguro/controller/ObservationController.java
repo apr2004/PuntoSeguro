@@ -1,5 +1,6 @@
 package com.puntoseguro.controller;
 
+import com.puntoseguro.dto.ObservationHistoryResponse;
 import com.puntoseguro.dto.ObservationRequest;
 import com.puntoseguro.dto.ObservationResponse;
 import com.puntoseguro.dto.AuthorResponse;
@@ -46,6 +47,14 @@ public class ObservationController {
         return observations.list(sid, principal);
     }
 
+    @Operation(summary = "Consultar historial de una observación", description = "Versiones de la más antigua a la más reciente, con el usuario que registró cada texto. El centro puede consultar todas; un docente solo las de alumnos asignados.")
+    @ApiResponse(responseCode = "200", description = "Historial de la observación")
+    @GetMapping("/students/{sid}/observations/{id}/history")
+    public List<ObservationHistoryResponse> history(@PathVariable Integer sid, @PathVariable Integer id,
+            @AuthenticationPrincipal PuntoSeguroPrincipal principal) {
+        return observations.history(sid, id, principal);
+    }
+
     @Operation(summary = "Añadir observación", description = "Solo un docente asignado al alumno. Autor y fecha se toman del servidor; el texto tiene entre 1 y 2000 caracteres tras recortarlo.")
     @ApiResponse(responseCode = "201", description = "Observación registrada")
     @ApiResponse(responseCode = "400", description = "Texto no válido (VALIDATION_ERROR, campo texto)")
@@ -55,7 +64,7 @@ public class ObservationController {
         return observations.create(sid, principal, request);
     }
 
-    @Operation(summary = "Corregir observación", description = "El autor puede corregir su texto mientras siga asignado; el centro puede corregirlo. Se conservan autor y fecha originales.")
+    @Operation(summary = "Corregir observación", description = "El autor puede corregir su texto mientras siga asignado; el centro puede corregirlo. Se conservan autor y fecha originales y cada versión queda en el historial.")
     @ApiResponse(responseCode = "200", description = "Observación corregida")
     @ApiResponse(responseCode = "400", description = "Texto no válido (VALIDATION_ERROR, campo texto)")
     @PutMapping("/students/{sid}/observations/{id}")
