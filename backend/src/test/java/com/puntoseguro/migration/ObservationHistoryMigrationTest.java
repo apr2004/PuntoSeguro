@@ -29,11 +29,11 @@ class ObservationHistoryMigrationTest {
             statement.executeUpdate("INSERT INTO observacion(id_alumno,id_autor,texto,fecha_creacion) VALUES (1,'"+author+"','Texto corregido antes del historial', TIMESTAMP '2024-02-03 10:15:00')");
         }
         flyway("7").migrate();
+        flyway(null).migrate();
         try (var connection=DriverManager.getConnection(db.getJdbcUrl(),db.getUsername(),db.getPassword()); var statement=connection.createStatement()) {
             statement.executeUpdate("INSERT INTO observacion(id_alumno,id_autor,texto,fecha_creacion) VALUES (1,'"+author+"','Observación nueva',CURRENT_TIMESTAMP)");
             statement.executeUpdate("INSERT INTO observacion_historial(id_observacion,id_editor,texto,fecha_edicion) VALUES (2,'"+author+"','Observación nueva',CURRENT_TIMESTAMP)");
         }
-        flyway(null).migrate();
         try (var connection=DriverManager.getConnection(db.getJdbcUrl(),db.getUsername(),db.getPassword()); var statement=connection.createStatement();
              var rows=statement.executeQuery("SELECT id_editor,texto,fecha_edicion,importado FROM observacion_historial ORDER BY id")) {
             assertTrue(rows.next());
