@@ -1,5 +1,5 @@
 # Preparación de la comunidad: PuntoSeguro (`community-readiness.md`)
-
+ 
 ## 1. Licencia
 
 Se adopta **Apache License 2.0** como licencia oficial del proyecto, cuyo texto íntegro se incluirá en el archivo `LICENSE` de la raíz del repositorio y se referenciará en el `README.md`.

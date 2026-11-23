@@ -1,5 +1,5 @@
 # Plan de Lanzamiento Open Source — PuntoSeguro
-
+ 
 **Proyecto:** [PuntoSeguro](https://github.com/apr2004/PuntoSeguro)  
 **Asignatura:** Gestión de Proyectos Software (E.T.S.I. Informática — Universidad de Málaga)  
 **Entregable común:** `open-source-launch-plan.md` (Actividades 1, 3 y 4)
