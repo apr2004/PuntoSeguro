@@ -27,9 +27,9 @@
 
 Tras poner en común los entregables de los cuatro subequipos (`open-source-strategy.md`, `technical-readiness.md`, `community-readiness.md` y `governance-and-sustainability.md`), se garantiza la alineación en tres ejes clave:
 
-- **Seguridad y alcance:** El aviso de «uso exclusivo con datos ficticios» definido por el Equipo A se materializa mediante la auditoría de actas e historial del Equipo B y la sección de advertencia obligatoria en el `README.md` redactada por el Equipo C.
-- **Licencia y dependencias:** La licencia **Apache 2.0** elegida por el Equipo C es plenamente compatible con el análisis de licencias de terceros de `pom.xml` y `package.json` realizado por el Equipo B.
-- **Gobernanza y flujo de trabajo:** Las reglas de revisión doble en cambios críticos del Equipo D se reflejan directamente en el `CONTRIBUTING.md` del Equipo C y se automatizan mediante las comprobaciones obligatorias de CI/CD del Equipo B.
+- **Seguridad y alcance:** El aviso de «uso exclusivo con datos ficticios» definido por Javier Urbaneja Benítez y Paula Fernández Jiménez se materializa mediante la auditoría de actas e historial de Andrea Pérez Rodríguez y Marina Fernández Serrano y la sección de advertencia obligatoria en el `README.md` redactada por Daniel Robles Cantos y Antonio Martín García.
+- **Licencia y dependencias:** La licencia **Apache 2.0** elegida por Daniel Robles Cantos y Antonio Martín García es plenamente compatible con el análisis de licencias de terceros de `pom.xml` y `package.json` realizado por Andrea Pérez Rodríguez y Marina Fernández Serrano.
+- **Gobernanza y flujo de trabajo:** Las reglas de revisión doble en cambios críticos de Alfonso Ramos Rojas y María Muñoz Martín se reflejan directamente en el `CONTRIBUTING.md` de Daniel Robles Cantos y Antonio Martín García y se automatizan mediante las comprobaciones obligatorias de CI/CD de Andrea Pérez Rodríguez y Marina Fernández Serrano.
 
 ### 2. Roadmap de apertura
 
