@@ -1,8 +1,0 @@
-2026.11.22 11:07:20 INFO  Tracing is disabled for protocol LSP. To enable tracing of incoming and outgoing JSON messages, create an empty file at c:\Users\paula\OneDrive - Universidad de Málaga\Carrera\4 año\Gestion\PuntoSeguro\.metals\lsp.trace.json or C:\Users\paula\AppData\Local\scalameta\metals\cache\lsp.trace.json
-2026.11.22 11:07:32 INFO  logging to files C:\Users\paula\OneDrive - Universidad de Málaga\Carrera\4 año\Gestion\PuntoSeguro\.metals\metals.log
-2026.11.22 11:07:32 INFO  Started: Metals version 1.6.9 in folders 'C:\Users\paula\OneDrive - Universidad de Málaga\Carrera\4 año\Gestion\PuntoSeguro' for client Visual Studio Code 1.145.2.
-2026.11.22 11:07:32 INFO  Memory monitor started
-2026.11.22 11:07:36 WARN  Using H2 2.5.250 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
-2026.11.22 11:07:54 INFO  no build target found for C:\Users\paula\OneDrive - Universidad de Málaga\Carrera\4 año\Gestion\PuntoSeguro\backend\src\main\java\com\puntoseguro\controller\AccessManagementController.java. Using fallback presentation compiler.
-2026.11.22 11:08:00 INFO  no build target found for C:\Users\paula\OneDrive - Universidad de Málaga\Carrera\4 año\Gestion\PuntoSeguro\backend\src\main\java\com\puntoseguro\controller\AccessManagementController.java. Using fallback presentation compiler.
-2026.11.23 16:27:22 INFO  no build target found for C:\Users\paula\OneDrive - Universidad de Málaga\Carrera\4 año\Gestion\PuntoSeguro\backend\src\main\java\com\puntoseguro\controller\AccessManagementController.java. Using fallback presentation compiler.
