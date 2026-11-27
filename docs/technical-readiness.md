@@ -1,6 +1,6 @@
 # Preparación técnica y seguridad — PuntoSeguro
 
-**Equipo B · Práctica P9 · Revisión: 23 de noviembre de 2026**
+**Andrea Pérez Rodríguez y Marina Fernández Serrano · Práctica P9 · Revisión: 23 de noviembre de 2026**
 
 **Versión analizada:** rama `main`, commit `113ae8dfcaa0de09a5f4cbd84fe6646a5020a2b6`. Las pruebas y los análisis indicados se realizaron sobre una copia de ese commit. Los resultados describen el estado observado en esa fecha y deben repetirse sobre la versión que se vaya a publicar.
 
@@ -32,10 +32,10 @@ Se extrajo texto de las dos transcripciones de `docs/reuniones/`; una búsqueda 
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Frontend        | `npm audit` informó de 0 vulnerabilidades en la fecha de la revisión. El lockfile declara principalmente MIT, además de ISC, Apache-2.0, BSD-3-Clause y CC-BY-4.0.                                                                    | Mantener el lockfile y repetir la auditoría en cada PR. Revisar avisos y obligaciones de atribución antes de distribuir.                                                                                   |
 | Backend         | OSV-Scanner señaló 11 avisos distintos en dependencias Jackson y Tomcat. Maven confirmó las versiones presentes; el escáner excluyó 12 paquetes no analizables. Los avisos no demuestran por sí solos que el proyecto sea explotable. | Analizar cada aviso, su alcance y versión corregida; actualizar o documentar una mitigación antes de publicar una release.                                                                                 |
-| Licencias Maven | El informe generado enumera 147 dependencias con al menos una licencia declarada, entre ellas Apache, MIT, BSD, EPL, LGPL y GPL con excepción de Classpath. Seis textos no se descargaron por errores 403.                            | Completar los textos faltantes y comprobar las opciones de licencia, condiciones de distribución y avisos de terceros. El Equipo C debe contrastar esta revisión con la licencia elegida para PuntoSeguro. |
+| Licencias Maven | El informe generado enumera 147 dependencias con al menos una licencia declarada, entre ellas Apache, MIT, BSD, EPL, LGPL y GPL con excepción de Classpath. Seis textos no se descargaron por errores 403.                            | Completar los textos faltantes y comprobar las opciones de licencia, condiciones de distribución y avisos de terceros. Daniel Robles Cantos y Antonio Martín García deben contrastar esta revisión con la licencia elegida para PuntoSeguro. |
 | Imágenes        | Se utilizan imágenes de PostgreSQL y Ollama; no se analizaron sus vulnerabilidades.                                                                                                                                                   | Analizar las imágenes utilizadas en la release y registrar sus versiones y resultados.                                                                                                                     |
 
-La licencia del propio proyecto y la compatibilidad completa con las dependencias aún deben acordarse y verificarse con el Equipo C. El informe técnico generado de Maven es `backend/target/generated-resources/licenses.xml` en la copia de análisis; el resultado de OSV está en `osv-readiness.json` en la carpeta de trabajo.
+La licencia del propio proyecto y la compatibilidad completa con las dependencias aún deben acordarse y verificarse con Daniel Robles Cantos y Antonio Martín García. El informe técnico generado de Maven es `backend/target/generated-resources/licenses.xml` en la copia de análisis; el resultado de OSV está en `osv-readiness.json` en la carpeta de trabajo.
 
 ## 4. Configuración y parámetros
 
