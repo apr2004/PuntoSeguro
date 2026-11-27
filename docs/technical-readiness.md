@@ -1,5 +1,5 @@
 # Preparación técnica y seguridad — PuntoSeguro
- 
+
 **Andrea Pérez Rodríguez y Marina Fernández Serrano · Práctica P9 · Revisión: 23 de noviembre de 2026**
 
 **Versión analizada:** rama `main`, commit `113ae8dfcaa0de09a5f4cbd84fe6646a5020a2b6`. Las pruebas y los análisis indicados se realizaron sobre una copia de ese commit. Los resultados describen el estado observado en esa fecha y deben repetirse sobre la versión que se vaya a publicar.
